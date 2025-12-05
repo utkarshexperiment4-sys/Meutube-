@@ -1,11 +1,10 @@
 // app.js - Metube एप्लिकेशन का मुख्य लॉजिक
 
 // =============================================================
-// 0. 🔥 आवश्यक Firebase Imports (त्रुटि सुधार के लिए जोड़ा गया)
+// 0. FIREBASE IMPORTS (नया जोड़ें)
 // =============================================================
-// चूंकि app.js सीधे इन फ़ंक्शंस का उपयोग कर रहा है, और वे initMetubeApp के माध्यम से पास नहीं किए जा रहे हैं,
-// इसलिए उन्हें यहां Import करना होगा, भले ही वे index.html में भी Import किए गए हों।
 
+// Firestore functions import करें
 import { 
     collection, 
     query, 
@@ -16,7 +15,6 @@ import {
     increment 
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
 // =============================================================
 // 1. ग्लोबल वैरिएबल्स और स्टेट
 // =============================================================
@@ -24,17 +22,14 @@ import {
 let METUBE_APP_ID;
 let AUTH_SERVICE;
 let DB_SERVICE;
-// ❌ STORAGE_SERVICE को हटा दिया गया है
-// let STORAGE_SERVICE; 
-
 let currentUser = null; 
 let currentFile = null;
 
 const VIDEOS_COLLECTION = 'videos';
 
-// 🆕 नया स्टोरेज API कॉन्फ़िगरेशन (Firebase Storage को बदलने के लिए)
+// 🆕 नया स्टोरेज API कॉन्फ़िगरेशन
 const NEW_STORAGE_API_KEY = 'dw1ksfmm7'; 
-const NEW_STORAGE_API_ID = '43483361888786527'; // इसका उपयोग स्टोरेज के लिए होगा
+const NEW_STORAGE_API_ID = '43483361888786527';
 
 // UI Elements
 const videosGrid = document.getElementById('videosGrid');
@@ -57,7 +52,7 @@ const playerChannelName = document.getElementById('playerChannelName');
 const playerVideoDescription = document.getElementById('playerVideoDescription');
 
 // =============================================================
-// 2. यूटिलिटी फ़ंक्शंस (कोई बदलाव नहीं)
+// 2. यूटिलिटी फ़ंक्शंस
 // =============================================================
 
 function formatTimeSince(date) {
@@ -82,7 +77,7 @@ function formatNumber(num) {
 }
 
 // =============================================================
-// 3. UI/नेविगेशन फ़ंक्शंस (कोई बदलाव नहीं)
+// 3. UI/नेविगेशन फ़ंक्शंस
 // =============================================================
 
 function toggleSidebar() {
@@ -113,7 +108,7 @@ function showPage(pageId) {
 }
 
 // =============================================================
-// 4. Firebase Auth (कोई बदलाव नहीं)
+// 4. Firebase Auth
 // =============================================================
 
 function setupAuthListener(auth) {
@@ -142,7 +137,7 @@ function setupAuthListener(auth) {
 }
 
 // =============================================================
-// 5. Firestore Data Handling (कोई बदलाव नहीं)
+// 5. Firestore Data Handling
 // =============================================================
 
 function createVideoCard(video) {
@@ -179,7 +174,7 @@ function loadVideos(db, appId) {
     if (loadingVideos) loadingVideos.style.display = 'block';
 
     try {
-        // यहाँ Firebase Firestore का उपयोग जारी रहेगा
+        // Firestore से वीडियो लोड करें
         const videosRef = collection(db, 'artifacts', appId, 'public', 'data', VIDEOS_COLLECTION);
         const q = query(videosRef);
         
@@ -200,6 +195,7 @@ function loadVideos(db, appId) {
                 });
             });
 
+            // नए वीडियो पहले दिखाएं
             videoList.sort((a, b) => {
                 const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
                 const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
@@ -225,11 +221,11 @@ function loadVideos(db, appId) {
 }
 
 // =============================================================
-// 6. VIDEO UPLOAD लॉजिक (बदलाव यहाँ हैं)
+// 6. VIDEO UPLOAD लॉजिक
 // =============================================================
 
-// 🆕 नए API के लिए एक डमी अपलोड फ़ंक्शन (इसे आप अपने असली API कॉल से बदल सकते हैं)
-function simulateNewAPiUpload(file, onProgress, onError, onSuccess) {
+// नए API के लिए अपलोड फ़ंक्शन
+function simulateNewAPIUpload(file, onProgress, onError, onSuccess) {
     let progress = 0;
     let startTime = Date.now();
     
@@ -242,16 +238,15 @@ function simulateNewAPiUpload(file, onProgress, onError, onSuccess) {
             const transferred = file.size;
             onProgress(100, transferred, transferred);
 
-            // ⚠️ ध्यान दें: यहाँ आपको नए API से प्राप्त असली वीडियो URL का उपयोग करना होगा।
+            // ⚠️ ध्यान दें: असली API का उपयोग करते समय यह URL बदलना होगा
             const dummyDownloadURL = `https://new-storage-service.com/video/${NEW_STORAGE_API_ID}/${file.name}`; 
             onSuccess(dummyDownloadURL);
         } else {
             const transferred = (file.size * progress) / 100;
             onProgress(progress, transferred, file.size);
         }
-    }, 200); // अपलोड प्रगति सिम्युलेशन
+    }, 200);
 }
-
 
 function handleFileInputChange(e) {
     const file = e.target.files[0];
@@ -269,7 +264,6 @@ function handleFileInputChange(e) {
     }
 }
 
-// storage पैरामीटर अब अप्रयुक्त है (null पास किया जाएगा)
 async function uploadVideo(e, db, storage, appId) { 
     e.preventDefault();
     
@@ -292,11 +286,11 @@ async function uploadVideo(e, db, storage, appId) {
     
     let startTime = Date.now();
     
-    // ❌ Firebase Storage के uploadTask को simulateNewAPiUpload से बदला गया है
-    simulateNewAPiUpload(
+    // नए API से अपलोड करें
+    simulateNewAPIUpload(
         currentFile,
-        (progress, transferredBytes, totalBytes) => { // onProgress फ़ंक्शन
-            // UI अपडेट लॉजिक
+        (progress, transferredBytes, totalBytes) => {
+            // UI अपडेट
             const transferredMB = (transferredBytes / 1024 / 1024).toFixed(2);
             const totalMB = (totalBytes / 1024 / 1024).toFixed(2);
             const elapsedSeconds = (Date.now() - startTime) / 1000;
@@ -306,24 +300,22 @@ async function uploadVideo(e, db, storage, appId) {
             progressText.textContent = `अपलोड हो रहा है: ${progress.toFixed(0)}% (${transferredMB} MB of ${totalMB} MB)`;
             uploadSpeed.textContent = `${speedKBps} KB/s`;
         },
-        (error) => { // onError फ़ंक्शन
+        (error) => {
             console.error("Upload failed:", error);
             progressText.textContent = 'अपलोड विफल: ' + error.message;
             progressFill.style.width = '0%';
             uploadSpeed.textContent = '';
         },
-        async (downloadURL) => { // onSuccess फ़ंक्शन
-            // Firestore में डेटा सहेजें (यह Firebase का उपयोग जारी रखेगा)
+        async (downloadURL) => {
+            // Firestore में metadata सहेजें
             try {
-                // ✅ यहाँ addDoc का उपयोग किया गया है
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', VIDEOS_COLLECTION), {
                     userId: userId,
                     userName: userName,
                     title: title,
                     description: description,
                     category: category,
-                    url: downloadURL, // 🆕 नए API से मिला URL यहाँ सहेजा गया है
-                    // storagePath: storagePath, // अब आवश्यकता नहीं
+                    url: downloadURL, // नए API से मिला URL
                     thumbnailUrl: `https://placehold.co/480x270/ff0000/fff?text=${title.substring(0, 10)}`,
                     views: 0,
                     likes: 0,
@@ -332,16 +324,22 @@ async function uploadVideo(e, db, storage, appId) {
 
                 console.log('वीडियो सफलतापूर्वक अपलोड और प्रकाशित हो गया!');
                 
+                // UI रीसेट करें
                 uploadForm.reset();
                 currentFile = null;
-                progressFill.style.width = '0%';
+                progressFill.style.width = '100%';
                 progressText.textContent = 'अपलोड सफल!';
                 uploadSpeed.textContent = 'डेटाबेस में सहेजा गया।';
                 
                 fileNameDisplay.textContent = 'कोई फ़ाइल नहीं चुनी गई।';
                 uploadDetails.style.display = 'none';
 
-                setTimeout(() => showPage('homePage'), 2000);
+                // 2 सेकंड बाद home page पर जाएं
+                setTimeout(() => {
+                    showPage('homePage');
+                    // नए वीडियो लोड करें
+                    loadVideos(db, appId);
+                }, 2000);
                 
             } catch (firestoreError) {
                 console.error("Failed to save metadata to Firestore:", firestoreError);
@@ -352,14 +350,14 @@ async function uploadVideo(e, db, storage, appId) {
 }
 
 // =============================================================
-// 7. VIDEO PLAYER लॉजिक (कोई बदलाव नहीं)
+// 7. VIDEO PLAYER लॉजिक
 // =============================================================
 
 async function playVideo(videoId, videoData) {
     if (!DB_SERVICE || !METUBE_APP_ID) return;
 
     try {
-        // ✅ यहाँ doc, updateDoc, increment का उपयोग किया गया है
+        // दृश्य गणना बढ़ाएं
         const videoDocRef = doc(DB_SERVICE, 'artifacts', METUBE_APP_ID, 'public', 'data', VIDEOS_COLLECTION, videoId);
         await updateDoc(videoDocRef, {
             views: increment(1)
@@ -369,6 +367,7 @@ async function playVideo(videoId, videoData) {
         console.error("Error updating view count:", e);
     }
     
+    // वीडियो प्लेयर सेट करें
     mainVideoPlayer.src = videoData.url;
     playerVideoTitle.textContent = videoData.title;
     playerVideoDescription.textContent = videoData.description;
@@ -377,30 +376,38 @@ async function playVideo(videoId, videoData) {
     playerVideoStats.textContent = `${formatNumber(videoData.views || 0)} दृश्य • ${formatTimeSince(uploadDate)}`;
     playerChannelName.textContent = videoData.userName || `User: ${videoData.userId?.substring(0, 10)}...`;
 
+    // प्लेयर पेज दिखाएं
     showPage('playerPage');
+    
+    // वीडियो ऑटो-प्ले शुरू करें
+    setTimeout(() => {
+        mainVideoPlayer.play().catch(e => console.log("Auto-play blocked:", e));
+    }, 500);
 }
 
 function searchVideos() {
     const query = document.getElementById('searchInput').value;
     console.log(`Searching for: ${query}`);
+    // यहाँ आप search functionality जोड़ सकते हैं
     showPage('homePage');
 }
 
 // =============================================================
-// 8. Initialization (बदलाव यहाँ हैं)
+// 8. Initialization
 // =============================================================
 
-// storage पैरामीटर को अब null भेजा जाएगा
 function initMetubeApp(appId, auth, db, storage) { 
     METUBE_APP_ID = appId;
     AUTH_SERVICE = auth;
     DB_SERVICE = db;
-    // ❌ STORAGE_SERVICE अब सेट नहीं होगा
-    // STORAGE_SERVICE = storage;
 
+    // Auth listener सेट करें
     setupAuthListener(auth);
+    
+    // वीडियो लोड करें
     loadVideos(db, appId);
     
+    // Event listeners सेट करें
     document.getElementById('selectFileBtn').addEventListener('click', () => {
         fileInput.click();
     });
@@ -408,10 +415,10 @@ function initMetubeApp(appId, auth, db, storage) {
     fileInput.addEventListener('change', handleFileInputChange);
 
     if (uploadForm) {
-        // uploadVideo में अब storage पैरामीटर के रूप में null भेजा जा रहा है
         uploadForm.addEventListener('submit', (e) => uploadVideo(e, db, null, appId));
     }
 
+    // Drag and drop functionality
     const uploadArea = document.getElementById('uploadArea');
     if (uploadArea) {
         uploadArea.addEventListener('dragover', (e) => {
@@ -434,10 +441,12 @@ function initMetubeApp(appId, auth, db, storage) {
         });
     }
 
+    // Global functions export
     window.playVideo = playVideo;
     window.showPage = showPage;
     window.toggleSidebar = toggleSidebar;
     window.searchVideos = searchVideos;
 }
 
+// Export functions
 export { initMetubeApp, showPage, toggleSidebar, searchVideos };
