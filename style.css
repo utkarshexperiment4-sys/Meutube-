@@ -1,0 +1,928 @@
+/* Reset और बेसिक स्टाइल्स */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+body {
+    background-color: #0f0f0f;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+/* लोडिंग स्क्रीन */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0f0f0f;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loader {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #333;
+    border-top: 5px solid #ff0000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-screen h2 {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* मुख्य ऐप कंटेनर */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* हेडर स्टाइल्स */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: #212121;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.menu-btn:hover {
+    background-color: #333;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.logo-icon {
+    background: #ff0000;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.logo-text {
+    font-size: 22px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #ff0000, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-center {
+    flex: 1;
+    max-width: 600px;
+    margin: 0 20px;
+}
+
+.search-container {
+    display: flex;
+    background-color: #121212;
+    border-radius: 30px;
+    overflow: hidden;
+    border: 1px solid #333;
+}
+
+.search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 20px;
+    color: white;
+    font-size: 16px;
+}
+
+.search-input::placeholder {
+    color: #888;
+}
+
+.search-btn {
+    background-color: #333;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.search-btn:hover {
+    background-color: #444;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.upload-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.upload-btn:hover {
+    background-color: #cc0000;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+}
+
+.login-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #444;
+}
+
+.logged-user {
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* साइडबार */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 60px;
+    width: 240px;
+    height: calc(100vh - 60px);
+    background-color: #212121;
+    overflow-y: auto;
+    padding: 20px 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    z-index: 90;
+}
+
+.sidebar.active {
+    transform: translateX(0);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 0 20px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 15px;
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.nav-item:hover {
+    background-color: #333;
+}
+
+.nav-item.active {
+    background-color: #383838;
+    font-weight: 500;
+}
+
+.nav-item i {
+    width: 24px;
+    text-align: center;
+    font-size: 18px;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 15px 0;
+}
+
+.category-title {
+    color: #aaa;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+}
+
+.sidebar-footer {
+    margin-top: 30px;
+    padding: 0 20px;
+    text-align: center;
+    color: #777;
+    font-size: 12px;
+}
+
+/* मुख्य कंटेंट */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    margin-left: 0;
+    margin-bottom: 60px;
+    transition: margin-left 0.3s;
+}
+
+.sidebar.active ~ .main-content {
+    margin-left: 240px;
+}
+
+/* पेज स्टाइल्स */
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-title {
+    font-size: 24px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.filter-btn.active {
+    background-color: #fff;
+    color: #000;
+    font-weight: 500;
+}
+
+.filter-btn:hover {
+    background-color: #444;
+}
+
+/* वीडियो ग्रिड */
+.videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.loading-videos {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+/* वीडियो कार्ड */
+.video-card {
+    background-color: #212121;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.thumbnail-container {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+}
+
+.video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.video-card:hover .video-thumbnail {
+    transform: scale(1.05);
+}
+
+.video-duration {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.offline-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #ff0000;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.video-info {
+    padding: 15px;
+}
+
+.video-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.channel-name {
+    color: #aaa;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.video-stats {
+    display: flex;
+    gap: 10px;
+    color: #888;
+    font-size: 14px;
+}
+
+.load-more-btn {
+    display: block;
+    margin: 30px auto;
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.load-more-btn:hover {
+    background-color: #444;
+}
+
+/* अपलोड पेज */
+.upload-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #212121;
+    border-radius: 15px;
+}
+
+.upload-title {
+    text-align: center;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.upload-area {
+    border: 2px dashed #555;
+    border-radius: 15px;
+    padding: 60px 20px;
+    text-align: center;
+    margin-bottom: 30px;
+    transition: border 0.3s;
+}
+
+.upload-area.drag-over {
+    border-color: #ff0000;
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.upload-icon {
+    font-size: 60px;
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.select-file-btn {
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 15px 0;
+    transition: background 0.3s;
+}
+
+.select-file-btn:hover {
+    background-color: #cc0000;
+}
+
+.upload-info {
+    margin-top: 20px;
+    color: #888;
+    font-size: 14px;
+}
+
+.upload-form {
+    margin-top: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: #121212;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.thumbnail-upload {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#thumbnailPreview {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+#changeThumbnailBtn {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.cancel-btn {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.upload-submit-btn {
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.upload-progress {
+    margin-top: 30px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #333;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #ff0000;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+.progress-text {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.upload-speed {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+}
+
+/* वीडियो प्लेयर */
+.video-player-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.video-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.video-player {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background-color: #000;
+    border-radius: 10px;
+}
+
+.player-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 0 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.video-wrapper:hover .player-controls {
+    opacity: 1;
+}
+
+.control-btn {
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.volume-slider {
+    width: 100px;
+}
+
+.video-info {
+    background-color: #212121;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.video-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    color: #888;
+}
+
+.video-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.action-btn:hover {
+    background-color: #444;
+}
+
+.like-btn.liked {
+    background-color: #ff0000;
+}
+
+.channel-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+}
+
+.channel-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.channel-details {
+    flex: 1;
+}
+
+.channel-name {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.channel-subs {
+    color: #888;
+    font-size: 14px;
+}
+
+.subscribe-btn {
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.subscribe-btn.subscribed {
+    background-color: #aaa;
+}
+
+.video-description h4 {
+    margin-bottom: 10px;
+}
+
+.video-description p {
+    color: #ccc;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+/* सर्च रिजल्ट्स */
+.result-count {
+    color: #888;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* बॉटम नेविगेशन */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #212121;
+    display: none;
+    justify-content: space-around;
+    padding: 10px 0;
+    border-top: 1px solid #333;
+    z-index: 100;
+}
+
+.bottom-nav .nav-item {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 12px;
+    padding: 8px;
+}
+
+.upload-nav-btn {
+    background-color: #ff0000;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-10px);
+}
+
+.upload-nav-btn i {
+    font-size: 20px;
+}
+
+/* ऑफलाइन इंडिकेटर */
+.offline-indicator {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    background-color: #ff9900;
+    color: #000;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    z-index: 99;
+}
+
+/* रिस्पॉन्सिव डिज़ाइन */
+@media (max-width: 768px) {
+    .header-center {
+        display: none;
+    }
+    
+    .header-right .upload-btn span {
+        display: none;
+    }
+    
+    .sidebar {
+        width: 100%;
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 15px;
+        margin-bottom: 70px;
+    }
+    
+    .videos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    
+    .bottom-nav {
+        display: flex;
+    }
+    
+    .upload-container {
+        padding: 20px;
+    }
+}
+
+@media (min-width: 769px) {
+    .sidebar {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 240px;
+    }
+    
+    .menu-btn {
+        display: none;
+    }
+    
+    .bottom-nav {
+        display: none;
+    }
+}
+
+/* स्क्रॉलबार */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #121212;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #444;
+  }
