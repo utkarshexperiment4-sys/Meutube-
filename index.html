@@ -51,7 +51,7 @@
                 
                 <div id="userSection" class="user-section">
                     <!-- ऑथेंटिकेशन स्टेट यहां JS द्वारा हैंडल की जाएगी -->
-                    <button id="loginBtn" class="login-btn" onclick="signInAnonymously(auth)">
+                    <button id="loginBtn" class="login-btn">
                         <i class="fas fa-user-circle"></i>
                         <span>लॉगिन</span>
                     </button>
@@ -122,15 +122,16 @@
                         <i class="fas fa-cloud-upload-alt upload-icon"></i>
                         <p>वीडियो फ़ाइल को यहाँ ड्रैग और ड्रॉप करें</p>
                         <p>या</p>
-                        <input type="file" id="fileInput" accept="video/*" onchange="handleFileInput(this.files[0])" style="display: none;">
-                        <button class="select-file-btn" onclick="document.getElementById('fileInput').click()">फ़ाइल चुनें</button>
+                        <!-- onchange इवेंट हटाया गया है, अब app.js में जोड़ा जाएगा -->
+                        <input type="file" id="fileInput" accept="video/*" style="display: none;">
+                        <button class="select-file-btn" id="selectFileBtn">फ़ाइल चुनें</button>
                         <p id="fileNameDisplay" class="upload-info">कोई फ़ाइल नहीं चुनी गई। (अधिकतम 100MB)</p>
                     </div>
 
                     <!-- 2. अपलोड प्रगति और फॉर्म (शुरुआत में छुपा हुआ) -->
                     <div id="uploadDetails" style="display: none;">
-                        <!-- ध्यान दें: onsubmit में window.selectedFile का उपयोग किया गया है -->
-                        <form id="uploadForm" onsubmit="window.uploadVideo(event, window.selectedFile)">
+                        <!-- onsubmit इवेंट हटाया गया है, अब app.js में जोड़ा जाएगा -->
+                        <form id="uploadForm"> 
                             
                             <!-- प्रगति बार -->
                             <div id="uploadProgress" class="upload-progress">
@@ -176,11 +177,27 @@
                 </div>
             </section>
             
-            <!-- वीडियो प्लेयर पेज और अन्य डमी पेज... (बाकी पेजों के सेक्शन यहाँ हैं) -->
+            <!-- वीडियो प्लेयर पेज और अन्य डमी पेज... -->
             <section id="playerPage" class="page">
                 <h2 class="page-title"><i class="fas fa-play-circle"></i> वीडियो प्लेयर</h2>
-                <p style="color: #888;">वीडियो प्लेयर पेज का लॉजिक अभी `app.js` में जोड़ा जाना बाकी है।</p>
+                <div id="videoPlayerContainer" class="video-player-container">
+                    <video id="mainVideoPlayer" class="main-video-player" controls autoplay></video>
+                    <div id="videoMeta" class="video-meta">
+                        <h1 id="playerVideoTitle" class="player-video-title">वीडियो शीर्षक</h1>
+                        <p id="playerVideoStats" class="player-video-stats">0 दृश्य • 0 सेकंड पहले</p>
+                        <div class="channel-details">
+                            <img id="playerChannelAvatar" class="channel-avatar" src="https://placehold.co/48x48/ff0000/fff?text=C" alt="चैनल">
+                            <div class="channel-info">
+                                <p id="playerChannelName" class="channel-name">चैनल का नाम</p>
+                                <p class="subscriber-count">10.5K ग्राहक</p>
+                            </div>
+                            <button class="subscribe-btn">सब्सक्राइब</button>
+                        </div>
+                        <div id="playerVideoDescription" class="video-description">विवरण...</div>
+                    </div>
+                </div>
             </section>
+
             <section id="trendingPage" class="page">
                 <h2 class="page-title"><i class="fas fa-fire"></i> ट्रेंडिंग वीडियो</h2>
                 <p style="color: #888;">यह पेज अभी बनाया जा रहा है। जल्द ही यहाँ नए ट्रेंडिंग वीडियो दिखेंगे।</p>
@@ -225,39 +242,23 @@
         import { getStorage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
         
         // App Logic को इंपोर्ट करें
-        import { initMetubeApp, showPage, toggleSidebar, uploadVideo, loadVideos } from './app.js';
+        import { initMetubeApp, showPage, toggleSidebar, searchVideos } from './app.js';
         
         // ग्लोबल कॉन्फ़िगरेशन
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Firebase सर्विसेज
-        let app, auth, db, storage;
-        
-        // फ़ाइल इनपुट के लिए ग्लोबल वेरिएबल
-        window.selectedFile = null;
-
-        // फ़ाइल इनपुट हैंडलर
-        window.handleFileInput = (file) => {
-            if (file) {
-                window.selectedFile = file;
-                document.getElementById('fileNameDisplay').textContent = `चुनी गई फ़ाइल: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-                document.getElementById('uploadDetails').style.display = 'block';
-                // फाइल चुनने पर प्रगति बार रीसेट करें
-                document.getElementById('progressFill').style.width = '0%';
-                document.getElementById('progressText').textContent = 'प्रगति: 0%';
-                document.getElementById('uploadSpeed').textContent = '0 KB/s';
-            } else {
-                window.selectedFile = null;
-                document.getElementById('fileNameDisplay').textContent = 'कोई फ़ाइल नहीं चुनी गई।';
-                document.getElementById('uploadDetails').style.display = 'none';
-            }
-        };
-
         // मेन इनिशियलाइज़ेशन फ़ंक्शन
         window.onload = async function() {
             setLogLevel('debug'); // Firebase Debugging के लिए
+            
+            // UI एलिमेंट्स
+            const loadingScreen = document.getElementById('loadingScreen');
+            const appContainer = document.getElementById('appContainer');
+
+            let app, auth, db, storage;
+            
             try {
                 if (firebaseConfig) {
                     app = initializeApp(firebaseConfig);
@@ -275,6 +276,7 @@
                     }
                     
                     // Metube App शुरू करें और सर्विसेज पास करें
+                    // initMetubeApp अब सारे इवेंट लिसनर और लॉजिक सेट करेगा
                     initMetubeApp(appId, auth, db, storage);
                     
                 } else {
@@ -285,30 +287,17 @@
                 console.error("Firebase initialization failed:", error);
             } finally {
                 // लोडिंग स्क्रीन हटाएँ और ऐप दिखाएँ
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'grid'; 
+                loadingScreen.style.display = 'none';
+                appContainer.style.display = 'grid'; 
                 showPage('homePage');
             }
         };
         
-        // ग्लोबल फ़ंक्शंस
+        // ग्लोबल फ़ंक्शंस (ये app.js से इंपोर्ट किए गए हैं)
         window.showPage = showPage;
         window.toggleSidebar = toggleSidebar;
-        window.uploadVideo = uploadVideo; // app.js से इंपोर्ट किया गया
-        window.loadVideos = loadVideos; // app.js से इंपोर्ट किया गया
+        window.searchVideos = searchVideos;
         
-        // Drag and Drop लॉजिक (अपलोड पेज के लिए)
-        const uploadArea = document.getElementById('uploadArea');
-        if (uploadArea) {
-            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
-            uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('drag-over'); });
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('drag-over');
-                const file = e.dataTransfer.files[0];
-                handleFileInput(file);
-            });
-        }
     </script>
 </body>
 </html>
