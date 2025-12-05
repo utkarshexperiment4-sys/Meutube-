@@ -1,24 +1,25 @@
 // =========================================================
-// Metube App - Main JavaScript File (Fully Integrated & Professional)
+// Metube App - Complete JavaScript Code (Error Free)
 // =========================================================
 
-// ग्लोबल ऑब्जेक्ट्स (index.html से लोड)
-// const auth; // Firebase Auth ऑब्जेक्ट यहाँ उपलब्ध माना जाता है
+// 🔥 GLOBAL VARIABLES (Firebase from index.html)
+const auth = window.auth || null; // Firebase Auth object
 
-// एप्लिकेशन स्टेट
+// 📱 APP STATE
 const AppState = {
     currentPage: 'home',
     currentVideo: null,
-    videos: [], // अब यह डेटाबेस से लोड होगा
-    filteredVideos: [], 
+    videos: [],
+    filteredVideos: [],
     categories: ['music', 'gaming', 'education', 'sports', 'entertainment'],
     searchQuery: '',
     isSidebarOpen: false,
     isOffline: !navigator.onLine,
-    currentUser: null // [नया] लॉगिन किए गए यूज़र को स्टोर करने के लिए
+    currentUser: null,
+    fileToUpload: null
 };
 
-// DOM Elements
+// 🎯 DOM ELEMENTS
 const elements = {
     homePage: document.getElementById('homePage'),
     trendingPage: document.getElementById('trendingPage'),
@@ -44,53 +45,81 @@ const elements = {
     resultCount: document.getElementById('resultCount')
 };
 
-// =========================================================
-// [नया] यूटिलिटी फ़ंक्शंस (Utilities)
-// =========================================================
-
+// 🛠️ UTILITY FUNCTIONS
 function formatNumber(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
 }
 
-// =========================================================
-// [सुधार] FIREBASE ऑथेंटिकेशन लॉजिक (Login/Signup)
-// =========================================================
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#ff4444' : type === 'success' ? '#44ff44' : '#333'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
-// लॉगिन ऑप्शंस शो (पूरी तरह से Firebase ईमेल/पासवर्ड के लिए अपडेटेड)
+// 🔐 FIREBASE AUTHENTICATION FUNCTIONS
 function showLoginOptions() {
     const loginOptions = `
-        <div id="authModalContent" style="padding: 20px; text-align: center;">
-            <h3>Metube में लॉगिन करें</h3>
+        <div id="authModalContent" style="padding: 25px; text-align: center;">
+            <h3 style="color: #ff0000; margin-bottom: 20px;">Metube में लॉगिन करें</h3>
             
-            <input type="email" id="authEmail" placeholder="ईमेल" style="padding: 10px; margin: 10px 0; width: 80%; border-radius: 5px; border: 1px solid #333; background: #121212; color: white;">
-            <input type="password" id="authPassword" placeholder="पासवर्ड (न्यूनतम 6 वर्ण)" style="padding: 10px; margin: 10px 0; width: 80%; border-radius: 5px; border: 1px solid #333; background: #121212; color: white;">
+            <input type="email" id="authEmail" placeholder="आपका ईमेल" 
+                style="padding: 12px; margin: 10px 0; width: 90%; border-radius: 8px; 
+                border: 1px solid #555; background: #121212; color: white; font-size: 16px;">
+            
+            <input type="password" id="authPassword" placeholder="पासवर्ड (न्यूनतम 6 वर्ण)" 
+                style="padding: 12px; margin: 10px 0; width: 90%; border-radius: 8px; 
+                border: 1px solid #555; background: #121212; color: white; font-size: 16px;">
 
-            <button onclick="handleAuth(true)" style="padding: 12px; background: #ff0000; color: white; border: none; border-radius: 5px; margin-top: 15px; width: 80%;">
+            <button onclick="handleAuth(true)" 
+                style="padding: 14px; background: #ff0000; color: white; border: none; 
+                border-radius: 8px; margin-top: 15px; width: 90%; font-size: 16px; font-weight: bold; cursor: pointer;">
                 लॉगिन करें
             </button>
-            <button onclick="handleAuth(false)" style="padding: 12px; background: #444; color: white; border: none; border-radius: 5px; margin-top: 10px; width: 80%;">
-                अकाउंट बनाएँ (साइनअप)
+            
+            <button onclick="handleAuth(false)" 
+                style="padding: 14px; background: #333; color: white; border: none; 
+                border-radius: 8px; margin-top: 10px; width: 90%; font-size: 16px; cursor: pointer;">
+                नया अकाउंट बनाएँ
             </button>
             
-            <p id="authMessage" style="color: yellow; margin-top: 10px; font-size: 14px;"></p>
+            <p id="authMessage" style="margin-top: 15px; font-size: 14px; min-height: 20px; color: #ffcc00;"></p>
+            
+            <button onclick="closeAuthModal()" 
+                style="margin-top: 15px; padding: 10px; background: transparent; 
+                color: #888; border: 1px solid #555; border-radius: 8px; cursor: pointer; width: 90%;">
+                बाद में
+            </button>
         </div>
     `;
     
-    // मोडल UI को पेशेवर तरीके से हैंडल करना
     const modal = document.createElement('div');
-    modal.className = 'modal-container';
+    modal.id = 'authModal';
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.8); display: flex; justify-content: center; 
-        align-items: center; z-index: 1000;
+        background: rgba(0,0,0,0.85); display: flex; justify-content: center; 
+        align-items: center; z-index: 1000; backdrop-filter: blur(5px);
     `;
     
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
         background: #212121; border-radius: 15px; padding: 0; 
         max-width: 400px; width: 90%; color: white;
+        border: 2px solid #ff0000; box-shadow: 0 10px 30px rgba(255,0,0,0.2);
     `;
     
     modalContent.innerHTML = loginOptions;
@@ -104,114 +133,190 @@ function showLoginOptions() {
     });
 }
 
-// ऑथेंटिकेशन को संभालता है (लॉगिन या साइनअप)
-window.handleAuth = async (isLogin) => {
-    // index.html में 'auth' ऑब्जेक्ट की उपलब्धता सुनिश्चित करें
-    if (typeof auth === 'undefined') {
-        document.getElementById('authMessage').textContent = 'त्रुटि: Firebase Auth लोड नहीं हो पाया। index.html चेक करें।';
+window.closeAuthModal = function() {
+    const modal = document.getElementById('authModal');
+    if (modal) {
+        document.body.removeChild(modal);
+    }
+};
+
+window.handleAuth = async function(isLogin) {
+    if (!auth) {
+        const message = document.getElementById('authMessage');
+        message.textContent = 'Firebase Auth उपलब्ध नहीं है। पेज रिफ्रेश करें।';
+        message.style.color = '#ff4444';
         return;
     }
     
-    const email = document.getElementById('authEmail').value;
-    const password = document.getElementById('authPassword').value;
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value.trim();
     const message = document.getElementById('authMessage');
 
     if (!email || !password || password.length < 6) {
         message.textContent = 'ईमेल और पासवर्ड (न्यूनतम 6 वर्ण) आवश्यक हैं।';
+        message.style.color = '#ff4444';
         return;
     }
     
     message.textContent = isLogin ? 'लॉगिन किया जा रहा है...' : 'अकाउंट बनाया जा रहा है...';
+    message.style.color = '#44ff44';
 
     try {
         if (isLogin) {
             await auth.signInWithEmailAndPassword(email, password);
-            message.textContent = 'लॉगिन सफल!';
+            message.textContent = 'लॉगिन सफल! रीडायरेक्ट हो रहा है...';
         } else {
             await auth.createUserWithEmailAndPassword(email, password);
-            message.textContent = 'साइनअप सफल!';
+            message.textContent = 'साइनअप सफल! रीडायरेक्ट हो रहा है...';
         }
         
         setTimeout(() => {
-            const modal = document.querySelector('.modal-container');
-            if (modal) modal.remove();
+            closeAuthModal();
         }, 1500);
         
     } catch (error) {
         let errorMessage = 'एक अज्ञात त्रुटि हुई।';
         if (error.code === 'auth/user-not-found') errorMessage = 'यूज़र मौजूद नहीं है।';
         else if (error.code === 'auth/wrong-password') errorMessage = 'पासवर्ड गलत है।';
-        else if (error.code === 'auth/email-already-in-use') errorMessage = 'यह ईमेल उपयोग में है।';
-        else if (error.code === 'auth/invalid-email') errorMessage = 'वैध ईमेल पता डालें।';
+        else if (error.code === 'auth/email-already-in-use') errorMessage = 'यह ईमेल पहले से उपयोग में है।';
+        else if (error.code === 'auth/invalid-email') errorMessage = 'कृपया वैध ईमेल पता डालें।';
+        else if (error.code === 'auth/network-request-failed') errorMessage = 'नेटवर्क त्रुटि। इंटरनेट कनेक्शन चेक करें।';
         
         message.textContent = `त्रुटि: ${errorMessage}`;
+        message.style.color = '#ff4444';
         console.error('Firebase Auth Error:', error);
     }
-}
+};
 
-// लॉगिन स्थिति के आधार पर UI अपडेट करें
 function updateUserUI(user) {
-    AppState.currentUser = user; 
+    AppState.currentUser = user;
     
     if (user) {
         elements.guestLoginBtn.style.display = 'none';
         elements.loggedUser.style.display = 'flex';
-        // यूज़र ईमेल को अवतार के पास टाइटल या टूलटिप में दिखा सकते हैं
-        elements.loggedUser.title = user.email; 
+        elements.loggedUser.title = user.email || 'यूज़र';
+        console.log('User logged in:', user.email);
     } else {
         elements.guestLoginBtn.style.display = 'flex';
         elements.loggedUser.style.display = 'none';
+        console.log('User logged out');
     }
 }
 
-// [नया] लॉगआउट फ़ंक्शन
-window.logoutUser = async () => {
-    if (AppState.currentUser) {
+window.logoutUser = async function() {
+    if (AppState.currentUser && auth) {
         try {
             await auth.signOut();
-            alert('आप सफलतापूर्वक लॉगआउट हो गए हैं!');
-            // UI अपडेट auth.onAuthStateChanged द्वारा स्वचालित रूप से संभाल लिया जाएगा।
+            showToast('आप सफलतापूर्वक लॉगआउट हो गए हैं!', 'success');
         } catch (error) {
             console.error('Logout Error:', error);
-            alert('लॉगआउट में त्रुटि हुई।');
+            showToast('लॉगआउट में त्रुटि हुई।', 'error');
         }
+    } else {
+        showToast('लॉगआउट करने के लिए पहले लॉगिन करें।', 'error');
     }
-}
+};
 
-// =========================================================
-// डेमो वीडियो डेटा (आपके पिछले कोड से लिया गया)
-// =========================================================
-
+// 📹 DEMO VIDEOS DATA
 const demoVideos = [
-    { id: 1, title: 'चाइनीज़ पॉप संगीत 2024 | 中国流行音乐', description: '2024 के सबसे लोकप्रिय चाइनीज़ पॉप गाने।', duration: '15:42', views: 2450000, likes: 125000, dislikes: 5000, channel: 'China Music Hub', channelSubs: 2500000, category: 'music', uploadDate: '2 दिन पहले', thumbnail: 'https://picsum.photos/seed/music1/320/180', videoUrl: 'assets/demo-video1.mp4', isOffline: false },
-    { id: 2, title: 'Genshin Impact Gameplay | 原神高级游戏', description: 'Genshin Impact के नए अपडेट की पूरी गेमप्ले। बेस्ट स्ट्रैटेजी और टिप्स।', duration: '22:10', views: 1850000, likes: 98000, dislikes: 3000, channel: 'Gaming China', channelSubs: 1500000, category: 'gaming', uploadDate: '1 सप्ताह पहले', thumbnail: 'https://picsum.photos/seed/gaming1/320/180', videoUrl: 'assets/demo-video2.mp4', isOffline: true },
-    { id: 3, title: 'चाइनीज़ भाषा सीखें | 学中文', description: 'आसान तरीके से चाइनीज़ भाषा सीखें। बेसिक से एडवांस्ड तक।', duration: '18:35', views: 3200000, likes: 210000, dislikes: 8000, channel: 'Learn Chinese', channelSubs: 3500000, category: 'education', uploadDate: '3 दिन पहले', thumbnail: 'https://picsum.photos/seed/edu1/320/180', videoUrl: 'assets/demo-video3.mp4', isOffline: false },
-    { id: 4, title: 'बीजिंग ओलंपिक हाइलाइट्स | 北京奥运会', description: 'बीजिंग ओलंपिक 2022 के सबसे यादगार पल। गोल्ड मेडल मोमेंट्स।', duration: '12:45', views: 4200000, likes: 305000, dislikes: 12000, channel: 'Sports China', channelSubs: 2800000, category: 'sports', uploadDate: '1 महीने पहले', thumbnail: 'https://picsum.photos/seed/sports1/320/180', videoUrl: 'assets/demo-video4.mp4', isOffline: true },
-    { id: 5, title: 'चाइनीज़ कॉमेडी शो | 中国喜剧', description: 'सबसे मजेदार चाइनीज़ कॉमेडी शो। हंसते-हंसते लोटपोट।', duration: '25:30', views: 1850000, likes: 95000, dislikes: 4000, channel: 'China Comedy', channelSubs: 1200000, category: 'entertainment', uploadDate: '4 दिन पहले', thumbnail: 'https://picsum.photos/seed/ent1/320/180', videoUrl: 'assets/demo-video5.mp4', isOffline: false },
-    { id: 6, title: 'शंघाई ट्रेवल गाइड | 上海旅游', description: 'शंघाई घूमने का पूरा गाइड। बेस्ट प्लेसेस, फूड और टिप्स।', duration: '20:15', views: 1650000, likes: 88000, dislikes: 2500, channel: 'Travel China', channelSubs: 1950000, category: 'entertainment', uploadDate: '5 दिन पहले', thumbnail: 'https://picsum.photos/seed/ent2/320/180', videoUrl: 'assets/demo-video6.mp4', isOffline: true },
-    { id: 7, title: 'चाइनीज़ कुकिंग शो | 中国烹饪', description: 'ऑथेंटिक चाइनीज़ डिशेज बनाना सीखें। स्टेप बाई स्टेप गाइड।', duration: '30:45', views: 1250000, likes: 78000, dislikes: 2000, channel: 'China Cooking', channelSubs: 1850000, category: 'entertainment', uploadDate: '6 घंटे पहले', thumbnail: 'https://picsum.photos/seed/cooking1/320/180', videoUrl: 'assets/demo-video7.mp4', isOffline: false },
-    { id: 8, title: 'टेक रिव्यू: Huawei P60 | 华为P60评测', description: 'नया Huawei P60 फोन की डिटेल रिव्यू। स्पेसिफिकेशन और परफॉर्मेंस।', duration: '28:20', views: 1950000, likes: 115000, dislikes: 5000, channel: 'Tech China', channelSubs: 2250000, category: 'education', uploadDate: '1 दिन पहले', thumbnail: 'https://picsum.photos/seed/tech1/320/180', videoUrl: 'assets/demo-video8.mp4', isOffline: true }
+    { 
+        id: 1, 
+        title: 'चाइनीज़ पॉप संगीत 2024 | 中国流行音乐', 
+        description: '2024 के सबसे लोकप्रिय चाइनीज़ पॉप गाने।', 
+        duration: '15:42', 
+        views: 2450000, 
+        likes: 125000, 
+        dislikes: 5000, 
+        channel: 'China Music Hub', 
+        channelSubs: 2500000, 
+        category: 'music', 
+        uploadDate: '2 दिन पहले', 
+        thumbnail: 'https://picsum.photos/seed/music1/320/180', 
+        videoUrl: 'assets/demo-video1.mp4', 
+        isOffline: false 
+    },
+    { 
+        id: 2, 
+        title: 'Genshin Impact Gameplay | 原神高级游戏', 
+        description: 'Genshin Impact के नए अपडेट की पूरी गेमप्ले। बेस्ट स्ट्रैटेजी और टिप्स।', 
+        duration: '22:10', 
+        views: 1850000, 
+        likes: 98000, 
+        dislikes: 3000, 
+        channel: 'Gaming China', 
+        channelSubs: 1500000, 
+        category: 'gaming', 
+        uploadDate: '1 सप्ताह पहले', 
+        thumbnail: 'https://picsum.photos/seed/gaming1/320/180', 
+        videoUrl: 'assets/demo-video2.mp4', 
+        isOffline: true 
+    },
+    { 
+        id: 3, 
+        title: 'चाइनीज़ भाषा सीखें | 学中文', 
+        description: 'आसान तरीके से चाइनीज़ भाषा सीखें। बेसिक से एडवांस्ड तक।', 
+        duration: '18:35', 
+        views: 3200000, 
+        likes: 210000, 
+        dislikes: 8000, 
+        channel: 'Learn Chinese', 
+        channelSubs: 3500000, 
+        category: 'education', 
+        uploadDate: '3 दिन पहले', 
+        thumbnail: 'https://picsum.photos/seed/edu1/320/180', 
+        videoUrl: 'assets/demo-video3.mp4', 
+        isOffline: false 
+    },
+    { 
+        id: 4, 
+        title: 'बीजिंग ओलंपिक हाइलाइट्स | 北京奥运会', 
+        description: 'बीजिंग ओलंपिक 2022 के सबसे यादगार पल। गोल्ड मेडल मोमेंट्स।', 
+        duration: '12:45', 
+        views: 4200000, 
+        likes: 305000, 
+        dislikes: 12000, 
+        channel: 'Sports China', 
+        channelSubs: 2800000, 
+        category: 'sports', 
+        uploadDate: '1 महीने पहले', 
+        thumbnail: 'https://picsum.photos/seed/sports1/320/180', 
+        videoUrl: 'assets/demo-video4.mp4', 
+        isOffline: true 
+    },
+    { 
+        id: 5, 
+        title: 'चाइनीज़ कॉमेडी शो | 中国喜剧', 
+        description: 'सबसे मजेदार चाइनीज़ कॉमेडी शो। हंसते-हंसते लोटपोट।', 
+        duration: '25:30', 
+        views: 1850000, 
+        likes: 95000, 
+        dislikes: 4000, 
+        channel: 'China Comedy', 
+        channelSubs: 1200000, 
+        category: 'entertainment', 
+        uploadDate: '4 दिन पहले', 
+        thumbnail: 'https://picsum.photos/seed/ent1/320/180', 
+        videoUrl: 'assets/demo-video5.mp4', 
+        isOffline: false 
+    }
 ];
 
-// =========================================================
-// ऐप इनिशियलाइज़ेशन और डेटा लोडिंग
-// =========================================================
-
+// 🚀 APP INITIALIZATION
 function initApp() {
     console.log('Metube ऐप शुरू हो रहा है...');
     
     setupEventListeners();
     checkNetworkStatus();
     
-    // 🔥 Firebase ऑथेंटिकेशन स्टेट चेक (Login/Logout को हैंडल करेगा)
-    if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged(updateUserUI);
+    if (auth) {
+        auth.onAuthStateChanged((user) => {
+            updateUserUI(user);
+        });
+    } else {
+        console.warn('Firebase Auth not available. Running in demo mode.');
     }
     
-    // 🔥 डेटाबेस से वीडियो लोड करें (अभी डेमो मोड)
-    loadVideosFromDatabase(); 
-    
-    loadOfflineVideos();
+    loadVideosFromDatabase();
     
     setTimeout(() => {
         document.getElementById('loading').style.display = 'none';
@@ -220,15 +325,14 @@ function initApp() {
     }, 1500);
 }
 
-// [सुधार] डेटाबेस लोडिंग फंक्शन (फेज 2.2 में Firestore से बदलेगा)
 function loadVideosFromDatabase() {
-    // 🔥 जब तक Firestore लागू नहीं होता, डेमो वीडियो लोड करें
     AppState.videos = demoVideos;
     AppState.filteredVideos = [...demoVideos];
     renderVideos();
     renderTrendingVideos();
 }
 
+// 🎮 EVENT LISTENERS SETUP
 function setupEventListeners() {
     elements.menuBtn.addEventListener('click', toggleSidebar);
     elements.searchBtn.addEventListener('click', performSearch);
@@ -236,10 +340,9 @@ function setupEventListeners() {
         if (e.key === 'Enter') performSearch();
     });
     
-    // [सुधार] अपलोड बटन: लॉगिन की आवश्यकता
     elements.uploadBtn.addEventListener('click', () => {
         if (!AppState.currentUser) {
-            alert('वीडियो अपलोड करने के लिए कृपया पहले लॉगिन करें।');
+            showToast('वीडियो अपलोड करने के लिए कृपया पहले लॉगिन करें।', 'error');
             showLoginOptions();
             return;
         }
@@ -249,8 +352,7 @@ function setupEventListeners() {
     elements.loadMoreBtn.addEventListener('click', loadMoreVideos);
     elements.guestLoginBtn.addEventListener('click', showLoginOptions);
     
-    // [नया] यूज़र अवतार पर क्लिक करके लॉगआउट करें
-    elements.loggedUser.addEventListener('click', logoutUser); 
+    elements.loggedUser.addEventListener('click', logoutUser);
     
     setupUploadForm();
     document.querySelector('.back-btn').addEventListener('click', goBack);
@@ -265,20 +367,28 @@ function setupEventListeners() {
     });
 }
 
-// =========================================================
-// वीडियो रेंडरिंग और पेज नेविगेशन (कोई बड़ा बदलाव नहीं)
-// =========================================================
-
+// 🎨 VIDEO RENDERING FUNCTIONS
 function renderVideos() {
     const grid = elements.videosGrid;
     grid.innerHTML = '';
+    
+    if (AppState.filteredVideos.length === 0) {
+        grid.innerHTML = `
+            <div class="no-videos">
+                <i class="fas fa-video-slash"></i>
+                <h3>कोई वीडियो नहीं मिला</h3>
+                <p>कृपया बाद में दोबारा कोशिश करें</p>
+            </div>
+        `;
+        return;
+    }
     
     AppState.filteredVideos.forEach(video => {
         const videoCard = createVideoCard(video);
         grid.appendChild(videoCard);
     });
     
-    elements.loadMoreBtn.style.display = AppState.filteredVideos.length >= 6 ? 'block' : 'none';
+    elements.loadMoreBtn.style.display = AppState.filteredVideos.length >= 5 ? 'block' : 'none';
 }
 
 function createVideoCard(video) {
@@ -322,6 +432,7 @@ function renderTrendingVideos() {
     });
 }
 
+// ▶️ VIDEO PLAYER FUNCTIONS
 function playVideo(video) {
     AppState.currentVideo = video;
     showPage('videoPlayer');
@@ -349,6 +460,7 @@ function updateVideoPlayer(video) {
     subscribeBtn.className = isSubscribed ? 'subscribe-btn subscribed' : 'subscribe-btn';
 }
 
+// 📱 PAGE NAVIGATION FUNCTIONS
 function toggleSidebar() {
     if (window.innerWidth <= 768) {
         AppState.isSidebarOpen = !AppState.isSidebarOpen;
@@ -410,17 +522,20 @@ function showPage(pageName) {
     }
 }
 
-// ग्लोबल फंक्शन्स
+// 🌐 GLOBAL FUNCTIONS (called from HTML)
 window.showHome = () => showPage('home');
 window.showTrending = () => showPage('trending');
 window.showUpload = () => showPage('upload');
+
 window.goBack = () => {
     if (AppState.currentPage === 'videoPlayer' || AppState.currentPage === 'search') {
         showPage('home');
     }
 };
+
 window.goHome = () => showPage('home');
 
+// 🔍 SEARCH FUNCTIONS
 function performSearch() {
     const query = elements.searchInput.value.trim();
     if (!query) return;
@@ -461,15 +576,20 @@ function renderSearchResults(results) {
     elements.resultCount.textContent = `${results.length} वीडियो मिले`;
 }
 
+// 🎛️ FILTER FUNCTIONS
 window.filterVideos = (filter) => {
     let filtered = [...AppState.videos];
     
     switch(filter) {
         case 'today':
-        case 'week':
-            // 🔥 जब तक रियल डेटाबेस नहीं है, यहाँ केवल डेमो फिल्टर ही काम करेंगे।
-            filtered = filtered.slice(0, 3);
+            filtered = filtered.slice(0, 2);
             break;
+        case 'week':
+            filtered = filtered.slice(2, 5);
+            break;
+        case 'all':
+        default:
+            filtered = [...AppState.videos];
     }
     
     AppState.filteredVideos = filtered;
@@ -483,18 +603,48 @@ window.filterByCategory = (category) => {
 };
 
 function loadMoreVideos() {
-    // 🔥 फेज 2.2 में, यह Firestore से अगला पेज लोड करेगा।
-    alert('और वीडियो लोड हो रहे हैं... (Firestore से डेटा आने पर काम करेगा)');
-    // अभी के लिए डेमो वीडियो फिर से लोड करते हैं ताकि ग्रिड खाली न लगे
-    AppState.videos.push(...demoVideos.slice(0, 2)); 
+    const newVideos = [
+        {
+            id: AppState.videos.length + 1,
+            title: 'शंघाई ट्रेवल गाइड | 上海旅游',
+            description: 'शंघाई घूमने का पूरा गाइड। बेस्ट प्लेसेस, फूड और टिप्स।',
+            duration: '20:15',
+            views: 1650000,
+            likes: 88000,
+            dislikes: 2500,
+            channel: 'Travel China',
+            channelSubs: 1950000,
+            category: 'entertainment',
+            uploadDate: '5 दिन पहले',
+            thumbnail: 'https://picsum.photos/seed/ent2/320/180',
+            videoUrl: 'assets/demo-video6.mp4',
+            isOffline: true
+        },
+        {
+            id: AppState.videos.length + 2,
+            title: 'चाइनीज़ कुकिंग शो | 中国烹饪',
+            description: 'ऑथेंटिक चाइनीज़ डिशेज बनाना सीखें। स्टेप बाई स्टेप गाइड।',
+            duration: '30:45',
+            views: 1250000,
+            likes: 78000,
+            dislikes: 2000,
+            channel: 'China Cooking',
+            channelSubs: 1850000,
+            category: 'entertainment',
+            uploadDate: '6 घंटे पहले',
+            thumbnail: 'https://picsum.photos/seed/cooking1/320/180',
+            videoUrl: 'assets/demo-video7.mp4',
+            isOffline: false
+        }
+    ];
+    
+    AppState.videos.push(...newVideos);
     AppState.filteredVideos = [...AppState.videos];
     renderVideos();
+    showToast('2 नए वीडियो लोड हुए!', 'success');
 }
 
-// =========================================================
-// अपलोड और इंटरेक्शन फंक्शन्स (Upload & Interaction)
-// =========================================================
-
+// 📤 UPLOAD FUNCTIONS
 function setupUploadForm() {
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('videoFileInput');
@@ -511,9 +661,15 @@ function setupUploadForm() {
         }
     });
     
-    // ड्रैग एंड ड्रॉप लॉजिक
-    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
-    uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('drag-over'); });
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+    
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadArea.classList.remove('drag-over');
@@ -526,6 +682,7 @@ function setupUploadForm() {
         uploadForm.style.display = 'none';
         uploadArea.style.display = 'block';
         fileInput.value = '';
+        AppState.fileToUpload = null;
     });
     
     uploadSubmitBtn.addEventListener('click', uploadVideo);
@@ -533,10 +690,15 @@ function setupUploadForm() {
 
 function handleFileSelect(file) {
     const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
-    const maxSize = 2 * 1024 * 1024 * 1024; // 2GB
+    const maxSize = 2 * 1024 * 1024 * 1024;
     
-    if (!validTypes.includes(file.type) || file.size > maxSize) {
-        alert('फ़ाइल अमान्य है। (MP4, MOV, AVI, अधिकतम 2GB)');
+    if (!validTypes.includes(file.type)) {
+        showToast('कृपया वीडियो फाइल चुनें (MP4, MOV, AVI)', 'error');
+        return;
+    }
+    
+    if (file.size > maxSize) {
+        showToast('फाइल साइज 2GB से कम होनी चाहिए', 'error');
         return;
     }
     
@@ -545,20 +707,16 @@ function handleFileSelect(file) {
     
     const fileName = file.name.replace(/\.[^/.]+$/, "");
     document.getElementById('videoTitle').value = fileName;
-    generateThumbnail(file);
     
-    // 🔥 [नया] फाइल को ग्लोबल स्टेट में सेव करें ताकि uploadVideo उसका उपयोग कर सके।
-    AppState.fileToUpload = file; 
-}
-
-function generateThumbnail(file) {
-    // 🔥 फेज 2.3 में यहाँ वास्तविक थंबनेल जनरेशन लॉजिक आएगा।
     document.getElementById('thumbnailPreview').src = 'assets/default-thumbnail.jpg';
+    
+    AppState.fileToUpload = file;
+    showToast('फाइल सफलतापूर्वक चुनी गई!', 'success');
 }
 
 function uploadVideo() {
     if (!AppState.currentUser) {
-        alert('अपलोड करने के लिए लॉगिन आवश्यक है।');
+        showToast('अपलोड करने के लिए लॉगिन आवश्यक है।', 'error');
         return;
     }
     
@@ -566,18 +724,20 @@ function uploadVideo() {
     const description = document.getElementById('videoDescription').value.trim();
     const category = document.getElementById('videoCategory').value;
     
-    if (!title || !AppState.fileToUpload) {
-        alert('कृपया टाइटल और फाइल दोनों चुनें।');
+    if (!title) {
+        showToast('कृपया वीडियो का टाइटल दें', 'error');
+        return;
+    }
+    
+    if (!AppState.fileToUpload) {
+        showToast('कृपया वीडियो फाइल चुनें', 'error');
         return;
     }
     
     document.getElementById('uploadProgress').style.display = 'block';
-    
-    // 🔥 [सुधार] यह फ़ंक्शन फेज 2.3 में Firebase Storage अपलोड लॉजिक से बदल जाएगा।
     simulateUploadProgress();
 }
 
-// अपलोड प्रोग्रेस सिम्युलेट (डेमो - इसे फेज 2.3 में बदल दिया जाएगा)
 function simulateUploadProgress() {
     let progress = 0;
     const progressFill = document.getElementById('progressFill');
@@ -595,62 +755,246 @@ function simulateUploadProgress() {
         if (progress >= 100) {
             clearInterval(interval);
             setTimeout(() => {
-                alert('वीडियो सफलतापूर्वक अपलोड हो गया! (यह डेमो है)');
+                showToast('वीडियो सफलतापूर्वक अपलोड हो गया!', 'success');
                 document.getElementById('uploadForm').style.display = 'none';
                 document.getElementById('uploadArea').style.display = 'block';
                 document.getElementById('uploadProgress').style.display = 'none';
                 document.getElementById('videoFileInput').value = '';
-                
+                AppState.fileToUpload = null;
                 showPage('home');
             }, 500);
         }
     }, 200);
 }
 
-window.likeVideo = () => { /* लॉजिक */ };
-window.dislikeVideo = () => { /* लॉजिक */ };
-
-document.getElementById('subscribeBtn').addEventListener('click', function() {
-    // [सुधार] यूज़र लॉगिन चेक करें
+// ⭐ VIDEO INTERACTION FUNCTIONS
+window.likeVideo = function() {
+    if (!AppState.currentVideo) return;
+    
     if (!AppState.currentUser) {
-        alert('सब्सक्राइब करने के लिए कृपया पहले लॉगिन करें।');
-        showLoginOptions();
+        showToast('लाइक करने के लिए लॉगिन करें', 'error');
         return;
     }
-    // बाकी सब्सक्रिप्शन लॉजिक...
+    
+    const likeBtn = document.querySelector('.like-btn');
+    const isLiked = likeBtn.classList.contains('liked');
+    
+    if (isLiked) {
+        likeBtn.classList.remove('liked');
+        AppState.currentVideo.likes--;
+        showToast('आपने लाइक हटा दिया', 'info');
+    } else {
+        likeBtn.classList.add('liked');
+        AppState.currentVideo.likes++;
+        showToast('आपने वीडियो लाइक किया!', 'success');
+    }
+    
+    document.getElementById('likeCount').textContent = formatNumber(AppState.currentVideo.likes);
+};
+
+window.dislikeVideo = function() {
+    if (!AppState.currentVideo) return;
+    
+    if (!AppState.currentUser) {
+        showToast('डिसलाइक करने के लिए लॉगिन करें', 'error');
+        return;
+    }
+    
+    AppState.currentVideo.dislikes++;
+    document.getElementById('dislikeCount').textContent = formatNumber(AppState.currentVideo.dislikes);
+    showToast('आपने वीडियो डिसलाइक किया', 'info');
+};
+
+document.getElementById('subscribeBtn').addEventListener('click', function() {
+    if (!AppState.currentVideo) return;
+    
+    if (!AppState.currentUser) {
+        showToast('सब्सक्राइब करने के लिए लॉगिन करें', 'error');
+        return;
+    }
+    
     const isSubscribed = this.classList.contains('subscribed');
-    if (isSubscribed) { /* Unsubscribe */ } else { /* Subscribe */ }
-    document.getElementById('channelSubs').textContent = `${formatNumber(AppState.currentVideo.channelSubs)} सब्सक्राइबर्स`;
+    
+    if (isSubscribed) {
+        this.classList.remove('subscribed');
+        this.textContent = 'सब्सक्राइब करें';
+        AppState.currentVideo.channelSubs--;
+        localStorage.setItem(`subscribed_${AppState.currentVideo.channel}`, 'false');
+        showToast('आपने सब्सक्राइब नहीं किया', 'info');
+    } else {
+        this.classList.add('subscribed');
+        this.textContent = 'सब्सक्राइब्ड';
+        AppState.currentVideo.channelSubs++;
+        localStorage.setItem(`subscribed_${AppState.currentVideo.channel}`, 'true');
+        showToast('आपने सफलतापूर्वक सब्सक्राइब किया!', 'success');
+    }
+    
+    document.getElementById('channelSubs').textContent = 
+        `${formatNumber(AppState.currentVideo.channelSubs)} सब्सक्राइबर्स`;
 });
 
-window.shareVideo = () => { /* लॉजिक */ };
-window.downloadVideo = () => { /* लॉजिक */ };
-function saveOfflineVideo(video) { /* लॉजिक */ }
-function loadOfflineVideos() { /* लॉजिक */ }
-function saveToHistory(video) { /* लॉजिक */ }
+window.shareVideo = function() {
+    if (!AppState.currentVideo) return;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: AppState.currentVideo.title,
+            text: 'Metube पर यह वीडियो देखें',
+            url: window.location.href,
+        }).then(() => {
+            showToast('वीडियो सफलतापूर्वक शेयर किया गया!', 'success');
+        });
+    } else {
+        navigator.clipboard.writeText(window.location.href)
+            .then(() => {
+                showToast('लिंक कॉपी हो गया! दोस्तों के साथ शेयर करें।', 'success');
+            });
+    }
+};
 
-// =========================================================
-// अन्य UI और कंट्रोल फंक्शन्स (कोई बड़ा बदलाव नहीं)
-// =========================================================
+window.downloadVideo = function() {
+    if (!AppState.currentVideo) return;
+    
+    if (AppState.currentVideo.isOffline) {
+        showToast('यह वीडियो पहले से डाउनलोड है', 'info');
+        return;
+    }
+    
+    const downloadLink = document.createElement('a');
+    downloadLink.href = AppState.currentVideo.videoUrl;
+    downloadLink.download = `${AppState.currentVideo.title}.mp4`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    AppState.currentVideo.isOffline = true;
+    saveOfflineVideo(AppState.currentVideo);
+    showToast('वीडियो डाउनलोड शुरू हो गया!', 'success');
+};
 
+function saveOfflineVideo(video) {
+    const offlineVideos = JSON.parse(localStorage.getItem('offlineVideos') || '[]');
+    
+    if (!offlineVideos.some(v => v.id === video.id)) {
+        offlineVideos.push({
+            id: video.id,
+            title: video.title,
+            thumbnail: video.thumbnail,
+            videoUrl: video.videoUrl,
+            duration: video.duration,
+            savedAt: new Date().toISOString()
+        });
+        localStorage.setItem('offlineVideos', JSON.stringify(offlineVideos));
+    }
+}
+
+function saveToHistory(video) {
+    const history = JSON.parse(localStorage.getItem('watchHistory') || '[]');
+    
+    const filteredHistory = history.filter(v => v.id !== video.id);
+    
+    filteredHistory.unshift({
+        id: video.id,
+        title: video.title,
+        thumbnail: video.thumbnail,
+        watchedAt: new Date().toISOString()
+    });
+    
+    const limitedHistory = filteredHistory.slice(0, 50);
+    localStorage.setItem('watchHistory', JSON.stringify(limitedHistory));
+}
+
+// 📡 NETWORK & RESIZE FUNCTIONS
 function checkNetworkStatus() {
     AppState.isOffline = !navigator.onLine;
     elements.offlineIndicator.style.display = AppState.isOffline ? 'block' : 'none';
 }
-function handleResize() { if (window.innerWidth > 768) closeSidebar(); }
-window.showSubscriptions = () => { alert('फेज 2.2 में उपलब्ध होगा - सब्सक्रिप्शन पेज'); };
-window.showLibrary = () => { alert('फेज 2.2 में उपलब्ध होगा - लाइब्रेरी पेज'); };
-window.showHistory = () => { alert('फेज 2.2 में उपलब्ध होगा - वॉच हिस्ट्री पेज'); };
-window.showDownloads = () => { alert('फेज 2.2 में उपलब्ध होगा - डाउनलोड्स पेज'); };
-window.togglePlay = () => { /* लॉजिक */ };
-window.skipBackward = () => { /* लॉजिक */ };
-window.skipForward = () => { /* लॉजिक */ };
-window.toggleMute = () => { /* लॉजिक */ };
-window.toggleFullscreen = () => { /* लॉजिक */ };
+
+function handleResize() {
+    if (window.innerWidth > 768) {
+        closeSidebar();
+    }
+}
+
+// 🎛️ DEMO PAGES (Phase 2 में पूरे होंगे)
+window.showSubscriptions = () => {
+    showToast('फेज 2 में उपलब्ध होगा - सब्सक्रिप्शन पेज', 'info');
+};
+
+window.showLibrary = () => {
+    showToast('फेज 2 में उपलब्ध होगा - लाइब्रेरी पेज', 'info');
+};
+
+window.showHistory = () => {
+    showToast('फेज 2 में उपलब्ध होगा - वॉच हिस्ट्री पेज', 'info');
+};
+
+window.showDownloads = () => {
+    showToast('फेज 2 में उपलब्ध होगा - डाउनलोड्स पेज', 'info');
+};
+
+// 🎮 VIDEO PLAYER CONTROLS
+window.togglePlay = function() {
+    const video = document.getElementById('videoPlayer');
+    const btn = document.getElementById('playBtn');
+    
+    if (video.paused) {
+        video.play();
+        btn.innerHTML = '<i class="fas fa-pause"></i>';
+    } else {
+        video.pause();
+        btn.innerHTML = '<i class="fas fa-play"></i>';
+    }
+};
+
+window.skipBackward = function() {
+    const video = document.getElementById('videoPlayer');
+    video.currentTime = Math.max(0, video.currentTime - 10);
+};
+
+window.skipForward = function() {
+    const video = document.getElementById('videoPlayer');
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+};
+
+window.toggleMute = function() {
+    const video = document.getElementById('videoPlayer');
+    const btn = document.getElementById('muteBtn');
+    
+    video.muted = !video.muted;
+    btn.innerHTML = video.muted ? 
+        '<i class="fas fa-volume-mute"></i>' : 
+        '<i class="fas fa-volume-up"></i>';
+};
+
+window.toggleFullscreen = function() {
+    const videoContainer = document.querySelector('.video-wrapper');
+    
+    if (!document.fullscreenElement) {
+        videoContainer.requestFullscreen().catch(err => {
+            console.log(`Fullscreen error: ${err.message}`);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+};
+
+// 🔊 VOLUME CONTROL
 document.getElementById('volumeSlider').addEventListener('input', (e) => {
     const video = document.getElementById('videoPlayer');
     video.volume = e.target.value / 100;
 });
 
-// ऐप इनिशियलाइज़ करें जब DOM लोड हो
+// 🏁 APP START
 document.addEventListener('DOMContentLoaded', initApp);
+
+// 🌐 NETWORK EVENTS
+window.addEventListener('online', () => {
+    elements.offlineIndicator.style.display = 'none';
+    showToast('आप ऑनलाइन हैं!', 'success');
+});
+
+window.addEventListener('offline', () => {
+    elements.offlineIndicator.style.display = 'block';
+    showToast('आप ऑफलाइन हैं। सेव किए गए वीडियो देख सकते हैं।', 'error');
+});
