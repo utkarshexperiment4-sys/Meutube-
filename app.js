@@ -1,6 +1,23 @@
 // app.js - Metube एप्लिकेशन का मुख्य लॉजिक
 
 // =============================================================
+// 0. 🔥 आवश्यक Firebase Imports (त्रुटि सुधार के लिए जोड़ा गया)
+// =============================================================
+// चूंकि app.js सीधे इन फ़ंक्शंस का उपयोग कर रहा है, और वे initMetubeApp के माध्यम से पास नहीं किए जा रहे हैं,
+// इसलिए उन्हें यहां Import करना होगा, भले ही वे index.html में भी Import किए गए हों।
+
+import { 
+    collection, 
+    query, 
+    onSnapshot, 
+    addDoc, 
+    doc, 
+    updateDoc, 
+    increment 
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+// =============================================================
 // 1. ग्लोबल वैरिएबल्स और स्टेट
 // =============================================================
 
@@ -298,6 +315,7 @@ async function uploadVideo(e, db, storage, appId) {
         async (downloadURL) => { // onSuccess फ़ंक्शन
             // Firestore में डेटा सहेजें (यह Firebase का उपयोग जारी रखेगा)
             try {
+                // ✅ यहाँ addDoc का उपयोग किया गया है
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', VIDEOS_COLLECTION), {
                     userId: userId,
                     userName: userName,
@@ -341,6 +359,7 @@ async function playVideo(videoId, videoData) {
     if (!DB_SERVICE || !METUBE_APP_ID) return;
 
     try {
+        // ✅ यहाँ doc, updateDoc, increment का उपयोग किया गया है
         const videoDocRef = doc(DB_SERVICE, 'artifacts', METUBE_APP_ID, 'public', 'data', VIDEOS_COLLECTION, videoId);
         await updateDoc(videoDocRef, {
             views: increment(1)
@@ -422,4 +441,3 @@ function initMetubeApp(appId, auth, db, storage) {
 }
 
 export { initMetubeApp, showPage, toggleSidebar, searchVideos };
-
