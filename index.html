@@ -441,6 +441,9 @@
 
     // Firebase को इनिशियलाइज़ करें
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(); 
+const storage = firebase.storage();
+
     
     // ऑथेंटिकेशन ऑब्जेक्ट सेट करें, जिसे app.js में उपयोग किया जाएगा
     const auth = firebase.auth(); 
