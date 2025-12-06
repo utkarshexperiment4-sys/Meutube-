@@ -1,4 +1,4 @@
-// app.js - Metube एप्लिकेशन का मुख्य लॉजिक (Cloudinary Upload के साथ अंतिम संस्करण)
+// app.js - Metube एप्लिकेशन का मुख्य लॉजिक (Cloudinary XHR Upload और लाइव प्रगति के साथ)
 
 // =============================================================
 // 0. 🔥 आवश्यक Firebase Imports 
@@ -29,7 +29,7 @@ const VIDEOS_COLLECTION = 'videos';
 // ✅ Cloudinary Configuration
 // Cloud Name का उपयोग अनसाइंड अपलोड के लिए किया जाता है।
 const CLOUDINARY_CLOUD_NAME = 'dw1ksfmm7';
-// ⚠️ आपको Cloudinary में एक 'unsigned preset' (जैसे 'metube_preset') बनाना होगा!
+// Cloudinary में बनाए गए Unsigned Preset का नाम:
 const CLOUDINARY_UPLOAD_PRESET = 'metube_live'; 
 
 
@@ -54,7 +54,7 @@ const playerChannelName = document.getElementById('playerChannelName');
 const playerVideoDescription = document.getElementById('playerVideoDescription');
 
 // =============================================================
-// 2. यूटिलिटी फ़ंक्शंस (यथावत)
+// 2. यूटिलिटी फ़ंक्शंस
 // =============================================================
 
 function formatTimeSince(date) {
@@ -79,7 +79,7 @@ function formatNumber(num) {
 }
 
 // =============================================================
-// 3. UI/नेविगेशन फ़ंक्शंस (यथावत)
+// 3. UI/नेविगेशन फ़ंक्शंस
 // =============================================================
 
 function toggleSidebar() {
@@ -109,7 +109,7 @@ function showPage(pageId) {
 }
 
 // =============================================================
-// 4. Firebase Auth (यथावत)
+// 4. Firebase Auth
 // =============================================================
 
 function setupAuthListener(auth) {
@@ -138,7 +138,7 @@ function setupAuthListener(auth) {
 }
 
 // =============================================================
-// 5. Firestore Data Handling (यथावत)
+// 5. Firestore Data Handling
 // =============================================================
 
 function createVideoCard(video) {
@@ -220,33 +220,70 @@ function loadVideos(db, appId) {
 }
 
 // =============================================================
-// 6. VIDEO UPLOAD लॉजिक
+// 6. VIDEO UPLOAD लॉजिक (XHR के साथ लाइव प्रगति दिखाने के लिए बदला गया)
 // =============================================================
 
 /**
- * क्लाइंट-साइड पर Cloudinary Unsigned Upload करता है।
+ * क्लाइंट-साइड पर Cloudinary Unsigned Upload करता है और प्रगति अपडेट करता है।
  * @param {File} file अपलोड करने के लिए फ़ाइल
  * @returns {Promise<string>} डाउनलोड URL
  */
 async function uploadVideoToCloudinary(file) {
-    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    
-    // Cloudinary अपलोड
-    const response = await fetch(url, {
-        method: 'POST',
-        body: formData
+    return new Promise((resolve, reject) => {
+        const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET); 
+
+        const xhr = new XMLHttpRequest();
+        const startTime = Date.now();
+
+        // 1. प्रगति हैंडलर: अपलोड होते समय बार-बार UI को अपडेट करता है
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded * 100) / e.total);
+                
+                // अपलोड प्रगति को 0% से 70% तक दिखाएँ (बाकी 30% Firestore के लिए)
+                progressFill.style.width = `${percent * 0.7}%`;
+                progressText.textContent = `अपलोड हो रहा है: ${percent}%`;
+                
+                // अपलोड स्पीड का अनुमान दिखाएँ
+                const uploadTime = (Date.now() - startTime) / 1000;
+                const speed = (e.loaded / 1024 / uploadTime).toFixed(1);
+                uploadSpeed.textContent = `गति: ${speed} KB/s`;
+            }
+        });
+
+        // 2. त्रुटि हैंडलर
+        xhr.addEventListener('error', () => {
+            reject(new Error("नेटवर्क त्रुटि या टाइमआउट के कारण अपलोड विफल।"));
+        });
+        
+        // 3. पूर्णता हैंडलर
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                resolve(data.secure_url);
+            } else {
+                let errorMessage = xhr.statusText;
+                try {
+                    const errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.error ? errorData.error.message : xhr.statusText;
+                } catch (e) { /* ignore */ }
+                
+                reject(new Error(`Cloudinary अपलोड विफल: ${xhr.status} - ${errorMessage}`));
+            }
+        });
+        
+        // 4. अनुरोध भेजें
+        xhr.open('POST', url);
+        xhr.send(formData);
+        
+        // UI को अपलोड शुरू होने का संकेत दें
+        progressFill.style.width = '5%';
+        progressText.textContent = 'अपलोड शुरू हो रहा है...';
+
     });
-    
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Cloudinary अपलोड विफल: ${errorData.error ? errorData.error.message : response.statusText}`);
-    }
-    
-    const data = await response.json();
-    return data.secure_url; // अपलोड होने के बाद वीडियो का URL वापस करता है
 }
 
 
@@ -274,11 +311,8 @@ async function uploadVideo(e, db, storage, appId) {
         alert('कृपया अपलोड करने के लिए एक वीडियो फ़ाइल चुनें!');
         return;
     }
-    if (CLOUDINARY_UPLOAD_PRESET === 'metube_preset') {
-         alert('⚠️ महत्वपूर्ण: कृपया Cloudinary में एक अनसाइंड अपलोड प्रीसेट (unsigned upload preset) बनाएँ और `app.js` में `CLOUDINARY_UPLOAD_PRESET` को उसके नाम से बदलें!');
-         return;
-    }
-
+    // Cloudinary प्रीसेट चेक अब अनावश्यक है क्योंकि हमने इसे 'metube_live' में सेट कर दिया है।
+    
     const title = document.getElementById('title').value;
     const description = document.getElementById('description').value;
     const category = document.getElementById('category').value;
@@ -293,14 +327,14 @@ async function uploadVideo(e, db, storage, appId) {
     // ----------------------------------------------------
     try {
         progressText.textContent = 'Cloudinary पर अपलोड हो रहा है...';
-        progressFill.style.width = '10%';
+        // progressFill.style.width = '10%'; <--- XHR प्रगति को अपडेट करेगा
         uploadSpeed.textContent = 'नेटवर्क अनुरोध शुरू...';
 
-        // ⚠️ यहाँ असली अपलोड लॉजिक है!
+        // ⚠️ यहाँ असली XHR अपलोड लॉजिक है!
         downloadURL = await uploadVideoToCloudinary(currentFile); 
         
         progressText.textContent = 'अपलोड पूरा!';
-        progressFill.style.width = '70%';
+        progressFill.style.width = '70%'; // अपलोड पूरा होने पर 70% दिखाएँ
         uploadSpeed.textContent = 'URL प्राप्त: ' + downloadURL.substring(0, 30) + '...';
 
     } catch (uploadError) {
@@ -325,7 +359,7 @@ async function uploadVideo(e, db, storage, appId) {
             description: description,
             category: category,
             url: downloadURL, // ✅ Cloudinary से प्राप्त असली URL
-            thumbnailUrl: downloadURL.replace('/upload/', '/upload/w_480,h_270,c_fill,g_auto/'), // Cloudinary के साथ Thumbnail URL बनाना आसान है
+            thumbnailUrl: downloadURL.replace('/upload/', '/upload/w_480,h_270,c_fill,g_auto/'), // Cloudinary Thumbnail URL बनाना आसान है
             views: 0,
             likes: 0,
             timestamp: new Date()
@@ -356,10 +390,8 @@ async function uploadVideo(e, db, storage, appId) {
 }
 
 
-// ... (बाकी फ़ंक्शंस यथावत) ...
-
 // =============================================================
-// 7. VIDEO PLAYER लॉजिक (यथावत)
+// 7. VIDEO PLAYER लॉजिक
 // =============================================================
 
 async function playVideo(videoId, videoData) {
@@ -397,7 +429,7 @@ function searchVideos() {
 }
 
 // =============================================================
-// 8. Initialization (यथावत)
+// 8. Initialization
 // =============================================================
 
 function initMetubeApp(appId, auth, db, storage) { 
