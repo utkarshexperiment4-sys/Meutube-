@@ -150,7 +150,7 @@ function createVideoCard(video) {
     
     card.innerHTML = `
         <div class="thumbnail-container">
-            <img src="${video.thumbnailUrl || 'https://placehold.co/480x270/0f0f0f/fff?text=Metube'}" alt="${video.title}" class="thumbnail">
+       <img src="${video.url.replace('/video/upload/', '/image/upload/').replace(/\.mp4|\.webm/i, '.jpg')}" alt="${video.title}" class="thumbnail"> 
             <span class="video-duration">${video.duration || '10:45'}</span>
         </div>
         <div class="video-details">
