@@ -30,7 +30,7 @@ const VIDEOS_COLLECTION = 'videos';
 // Cloud Name का उपयोग अनसाइंड अपलोड के लिए किया जाता है।
 const CLOUDINARY_CLOUD_NAME = 'dw1ksfmm7';
 // ⚠️ आपको Cloudinary में एक 'unsigned preset' (जैसे 'metube_preset') बनाना होगा!
-const CLOUDINARY_UPLOAD_PRESET = 'metube_preset'; 
+const CLOUDINARY_UPLOAD_PRESET = 'metube_live'; 
 
 
 // UI Elements
