@@ -1,7 +1,7 @@
 {
-  "name": "Metube",
-  "short_name": "Metube",
-  "description": "चाइना का अपना वीडियो प्लेटफ़ॉर्म",
+  "name": "Chitrapat",
+  "short_name": "Chitrapat",
+  "description": "अपना वीडियो प्लेटफ़ॉर्म",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f0f",
